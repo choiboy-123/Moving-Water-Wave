@@ -1,0 +1,44 @@
+#version 400
+
+// Interpolated values from the vertex shaders
+in vec3 normal_gs;
+in vec3 eye_gs;
+in vec3 light_gs;
+in vec2 uv_gs;
+
+// Ouput data
+out vec4 color_out;
+
+uniform sampler2D waterTexture;
+
+void phongColor() {
+
+    // Light emission properties
+    vec4 LightColor = vec4(1,1,1,1);
+
+    // Material properties
+    vec4 MaterialDiffuseColor = texture(waterTexture, uv_gs);
+    vec4 MaterialAmbientColor = vec4(0.2,0.2,0.2,MaterialDiffuseColor.a) * MaterialDiffuseColor;
+    vec4 MaterialSpecularColor = vec4(0.7, 0.7, 0.7,MaterialDiffuseColor.a);
+
+
+    vec3 l = normalize(light_gs);
+    float cosTheta = clamp( dot(normal_gs,l), 0,1 ); //ensure dot product is between 0 and 1
+
+    vec3 E = normalize(eye_gs);
+    vec3 R = reflect(l,-normal_gs);
+    float cosAlpha = clamp(dot(E,R),0,1);
+
+
+    color_out =
+        // Ambient : simulates indirect lighting
+        MaterialAmbientColor +
+        // Diffuse : "color" of the object
+        MaterialDiffuseColor * LightColor * cosTheta +
+        // Specular : reflective highlight, like a mirror
+        MaterialSpecularColor * LightColor * pow(cosAlpha,8);
+}
+
+void main(){
+    phongColor();
+}
